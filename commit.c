@@ -192,11 +192,11 @@ int commit_create(const char *message, ObjectID *commit_id_out) {
     memset(&commit, 0, sizeof(commit));
     commit.tree = tree_id;
 
-    // Debug
-    char hex[HASH_HEX_SIZE + 1];
-    hash_to_hex(&tree_id, hex);
-    printf("DEBUG tree: %s\n", hex);
-
-    (void)message; (void)commit_id_out;
-    return -1;  // not done yet
-}
+    // Step 3: Read HEAD for parent commit (none on first commit)
+    ObjectID parent_id;
+    if (head_read(&parent_id) == 0) {
+        commit.parent     = parent_id;
+        commit.has_parent = 1;
+    } else {
+        commit.has_parent = 0;
+    }
