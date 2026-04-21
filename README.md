@@ -1,4 +1,4 @@
-# Github RUL : https://github.com/Pushkar-Kulkarni-00/PES1UG24CS350-pes-vcs/edit/main/README.md
+# Github URL : https://github.com/Pushkar-Kulkarni-00/PES1UG24CS350-pes-vcs/edit/main/README.md
 # PES-VCS — A Version Control System from Scratch
 
 **Author:** Pushkar S Kulkarni `<PES1UG24CS350>`  
