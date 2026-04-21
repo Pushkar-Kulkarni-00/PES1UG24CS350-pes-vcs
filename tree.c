@@ -171,8 +171,45 @@ static int write_tree_recursive(FlatEntry *entries, int count, int depth, Object
             te->name[nlen] = '\0';
             i++;
         } else {
-            // Subdirectory — skip for now
-            i++;
+            // Extract subdirectory name (e.g. "src" from "src/main.c")
+            size_t prefix_len = (size_t)(slash - rel);
+            char subdir_name[256];
+            if (prefix_len >= sizeof(subdir_name)) return -1;
+            memcpy(subdir_name, rel, prefix_len);
+            subdir_name[prefix_len] = '\0';
+
+            // Find all entries sharing this prefix
+            int j = i;
+            while (j < count) {
+                const char *r = entries[j].path;
+                for (int d = 0; d < depth; d++) {
+                    const char *s = strchr(r, '/');
+                    if (!s) { r = NULL; break; }
+                    r = s + 1;
+                }
+                if (!r) break;
+                const char *s = strchr(r, '/');
+                if (!s) break;
+                size_t plen = (size_t)(s - r);
+                if (plen != prefix_len || strncmp(r, subdir_name, prefix_len) != 0) break;
+                j++;
+            }
+
+            // Recurse into this subdirectory group
+            ObjectID subtree_id;
+            if (write_tree_recursive(entries + i, j - i, depth + 1, &subtree_id) != 0)
+                return -1;
+
+            if (tree.count >= MAX_TREE_ENTRIES) return -1;
+            TreeEntry *te = &tree.entries[tree.count++];
+            te->mode = 0040000;
+            te->hash = subtree_id;
+            size_t nlen = strlen(subdir_name);
+            if (nlen >= sizeof(te->name)) nlen = sizeof(te->name) - 1;
+            memcpy(te->name, subdir_name, nlen);
+            te->name[nlen] = '\0';
+
+            i = j;
         }
     }
 
