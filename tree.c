@@ -16,6 +16,17 @@
 #include <dirent.h>
 #include <sys/stat.h>
 
+
+int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out);
+
+#define MAX_FLAT_ENTRIES 4096
+
+typedef struct {
+    uint32_t mode;
+    ObjectID hash;
+    char path[256];
+} FlatEntry;
+
 // ─── Mode Constants ─────────────────────────────────────────────────────────
 
 #define MODE_FILE      0100644
@@ -130,8 +141,31 @@ int tree_serialize(const Tree *tree, void **data_out, size_t *len_out) {
 //
 // Returns 0 on success, -1 on error.
 int tree_from_index(ObjectID *id_out) {
-    // TODO: Implement recursive tree building
-    // (See Lab Appendix for logical steps)
+    static FlatEntry entries[MAX_FLAT_ENTRIES];
+    int count = 0;
+
+    FILE *f = fopen(".pes/index", "r");
+    if (f) {
+        char hex[65];
+        unsigned long long mtime, size_val;
+        while (count < MAX_FLAT_ENTRIES) {
+            FlatEntry *e = &entries[count];
+            int ret = fscanf(f, "%o %64s %llu %llu %255s\n",
+                             &e->mode, hex, &mtime, &size_val, e->path);
+            if (ret < 5 || ret == EOF) break;
+            // Convert hex string to binary hash
+            for (int k = 0; k < HASH_SIZE; k++) {
+                unsigned int byte;
+                sscanf(hex + k * 2, "%2x", &byte);
+                e->hash.hash[k] = (uint8_t)byte;
+            }
+            printf("DEBUG entry: %s\n", e->path);  // remove later
+            count++;
+        }
+        fclose(f);
+    }
+
+    printf("DEBUG: %d entries loaded\n", count);
     (void)id_out;
-    return -1;
+    return -1;  // not done yet
 }
