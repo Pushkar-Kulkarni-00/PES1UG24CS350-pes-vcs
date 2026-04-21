@@ -125,7 +125,7 @@ int tree_serialize(const Tree *tree, void **data_out, size_t *len_out) {
     return 0;
 }
 
-//TODO COMPLETED AND TESTED
+//TODO COMPLETED
 
 static int write_tree_recursive(FlatEntry *entries, int count, int depth, ObjectID *id_out) {
     Tree tree;
