@@ -34,7 +34,7 @@ make clean    # Remove all build artifacts
 Set your author name:
 
 ```bash
-export PES_AUTHOR="Your Name <PESXUG24CSxxx>"
+export PES_AUTHOR="Your Name <PESXUG24CSXXX>"
 ```
 
 ---
