@@ -140,6 +140,50 @@ int tree_serialize(const Tree *tree, void **data_out, size_t *len_out) {
 //   - object_write    : save that binary buffer to the store as OBJ_TREE
 //
 // Returns 0 on success, -1 on error.
+
+
+static int write_tree_recursive(FlatEntry *entries, int count, int depth, ObjectID *id_out) {
+    Tree tree;
+    tree.count = 0;
+
+    int i = 0;
+    while (i < count) {
+        // Get the path relative to current depth
+        const char *rel = entries[i].path;
+        for (int d = 0; d < depth; d++) {
+            const char *slash = strchr(rel, '/');
+            if (!slash) { rel = NULL; break; }
+            rel = slash + 1;
+        }
+        if (!rel) { i++; continue; }
+
+        const char *slash = strchr(rel, '/');
+
+        if (!slash) {
+            // File at this level — add directly
+            if (tree.count >= MAX_TREE_ENTRIES) return -1;
+            TreeEntry *te = &tree.entries[tree.count++];
+            te->mode = entries[i].mode;
+            te->hash = entries[i].hash;
+            size_t nlen = strlen(rel);
+            if (nlen >= sizeof(te->name)) nlen = sizeof(te->name) - 1;
+            memcpy(te->name, rel, nlen);
+            te->name[nlen] = '\0';
+            i++;
+        } else {
+            // Subdirectory — skip for now
+            i++;
+        }
+    }
+
+    void *tree_data; size_t tree_len;
+    if (tree_serialize(&tree, &tree_data, &tree_len) != 0) return -1;
+    int rc = object_write(OBJ_TREE, tree_data, tree_len, id_out);
+    free(tree_data);
+    return rc;
+}
+
+
 int tree_from_index(ObjectID *id_out) {
     static FlatEntry entries[MAX_FLAT_ENTRIES];
     int count = 0;
