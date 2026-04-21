@@ -165,7 +165,14 @@ int tree_from_index(ObjectID *id_out) {
         fclose(f);
     }
 
-    printf("DEBUG: %d entries loaded\n", count);
-    (void)id_out;
-    return -1;  // not done yet
+    if (count == 0) {
+        Tree empty = {0};
+        void *tree_data; size_t tree_len;
+        if (tree_serialize(&empty, &tree_data, &tree_len) != 0) return -1;
+        int rc = object_write(OBJ_TREE, tree_data, tree_len, id_out);
+        free(tree_data);
+        return rc;
+    }
+
+    return write_tree_recursive(entries, count, 0, id_out);
 }
