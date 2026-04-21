@@ -193,6 +193,8 @@ int index_save(const Index *index) {
     return 0;
 }
 
+//Verified staged / unstaged and untracked files
+
 int index_add(Index *index, const char *path) {
     // Read file contents
     FILE *f = fopen(path, "rb");
