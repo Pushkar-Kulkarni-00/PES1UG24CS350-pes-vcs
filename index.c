@@ -125,7 +125,7 @@ int index_status(const Index *index) {
     return 0;
 }
 
-//TODO1
+
 int index_load(Index *index) {
     index->count = 0;
 
@@ -149,16 +149,7 @@ int index_load(Index *index) {
     return 0;
 }
 
-// Save the index to .pes/index atomically.
-//
-// HINTS - Useful functions and syscalls:
-//   - qsort                            : sorting the entries array by path
-//   - fopen (with "w"), fprintf        : writing to the temporary file
-//   - hash_to_hex                      : converting ObjectID for text output
-//   - fflush, fileno, fsync, fclose    : flushing userspace buffers and syncing to disk
-//   - rename                           : atomically moving the temp file over the old index
-//
-// Returns 0 on success, -1 on error.
+
 static int compare_entries(const void *a, const void *b) {
     return strcmp(((const IndexEntry *)a)->path, ((const IndexEntry *)b)->path);
 }
@@ -199,18 +190,25 @@ int index_save(const Index *index) {
     return 0;
 }
 
-// Stage a file for the next commit.
-//
-// HINTS - Useful functions and syscalls:
-//   - fopen, fread, fclose             : reading the target file's contents
-//   - object_write                     : saving the contents as OBJ_BLOB
-//   - stat / lstat                     : getting file metadata (size, mtime, mode)
-//   - index_find                       : checking if the file is already staged
-//
-// Returns 0 on success, -1 on error.
 int index_add(Index *index, const char *path) {
-    // TODO: Implement file staging
-    // (See Lab Appendix for logical steps)
-    (void)index; (void)path;
-    return -1;
-}
+    // Read file contents
+    FILE *f = fopen(path, "rb");
+    if (!f) { fprintf(stderr, "error: cannot open '%s'\n", path); return -1; }
+
+    fseek(f, 0, SEEK_END);
+    long file_size = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    if (file_size < 0) { fclose(f); return -1; }
+
+    void *buf = malloc((size_t)(file_size + 1));
+    if (!buf) { fclose(f); return -1; }
+
+    size_t nread = (file_size > 0) ? fread(buf, 1, (size_t)file_size, f) : 0;
+    fclose(f);
+
+    if (file_size > 0 && nread != (size_t)file_size) { free(buf); return -1; }
+
+    // Write as blob to object store
+    ObjectID blob_id;
+    if (object_write(OBJ_BLOB, buf, nread, &blob_id) != 0) { free(buf); return -1; }
+    free(buf);
