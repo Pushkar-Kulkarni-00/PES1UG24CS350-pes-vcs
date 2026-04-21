@@ -24,6 +24,9 @@
 #include <unistd.h>
 #include <dirent.h>
 
+int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out);
+
+
 // ─── PROVIDED ────────────────────────────────────────────────────────────────
 
 // Find an index entry by path (linear scan).
@@ -212,3 +215,31 @@ int index_add(Index *index, const char *path) {
     ObjectID blob_id;
     if (object_write(OBJ_BLOB, buf, nread, &blob_id) != 0) { free(buf); return -1; }
     free(buf);
+    // Get file metadata
+    struct stat st;
+    if (lstat(path, &st) != 0) return -1;
+    uint32_t mode = (st.st_mode & S_IXUSR) ? 0100755 : 0100644;
+
+    // Update existing entry or append new one
+    IndexEntry *existing = index_find(index, path);
+    if (existing) {
+        existing->hash     = blob_id;
+        existing->mode     = mode;
+        existing->mtime_sec = (uint64_t)st.st_mtime;
+        existing->size     = (uint32_t)st.st_size;
+    } else {
+        if (index->count >= MAX_INDEX_ENTRIES) {
+            fprintf(stderr, "error: index is full\n");
+            return -1;
+        }
+        IndexEntry *e = &index->entries[index->count++];
+        e->hash      = blob_id;
+        e->mode      = mode;
+        e->mtime_sec = (uint64_t)st.st_mtime;
+        e->size      = (uint32_t)st.st_size;
+        strncpy(e->path, path, sizeof(e->path) - 1);
+        e->path[sizeof(e->path) - 1] = '\0';
+    }
+
+    return index_save(index);
+}
