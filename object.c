@@ -60,7 +60,7 @@ int object_exists(const ObjectID *id) {
     return access(path, F_OK) == 0;
 }
 
-//TODO 1
+//TODO COMPLETED AND TESTS WORKING
 int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out) {
     const char *type_str = (type == OBJ_BLOB) ? "blob" :
                            (type == OBJ_TREE) ? "tree" : "commit";
@@ -124,7 +124,7 @@ int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out
     return 0;
 }
 
-//TODO
+
 int object_read(const ObjectID *id, ObjectType *type_out, void **data_out, size_t *len_out) {
     char path[512];
     object_path(id, path, sizeof(path));
