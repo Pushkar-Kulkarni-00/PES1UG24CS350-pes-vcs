@@ -33,7 +33,7 @@ make clean    # Remove all build artifacts
 Set your author name:
 
 ```bash
-export PES_AUTHOR="Your Name <PESXUG24CS350>"
+export PES_AUTHOR="Your Name <PESXUG24CSxxx>"
 ```
 
 ---
@@ -173,21 +173,6 @@ Full end-to-end test via `make test-integration` (`test_sequence.sh`):
 
 ---
 
-## Key Design Decisions
-
-**Why heap-allocate in `index_save`?**  
-The `Index` struct holds 10,000 entries × ~600 bytes = ~6MB. A stack copy causes a stack overflow. The sorted copy is `malloc`'d, used, and immediately `free`'d.
-
-**Why `tree_from_index` reads the index file directly?**  
-The `test_tree` binary links only `object.o` and `tree.o` — not `index.o`. To avoid a linker error, `tree_from_index` parses `.pes/index` via `fscanf` directly rather than calling `index_load`.
-
-**Why `0644` not `0444` for object files?**  
-The integrity test needs to open the object file for writing to simulate corruption. `0444` (read-only) blocks that, causing the test to fail at `fopen`.
-
-**Why `fsync` + `rename` everywhere?**  
-All writes use the temp-file-then-rename pattern with `fsync` on both the file and its parent directory. This guarantees atomicity — a crash mid-write leaves either the old file or the new file, never a partial write.
-
----
 
 ## Analysis Questions (Phases 5 & 6)
 
@@ -213,8 +198,3 @@ A concurrent commit builds a new tree and blob objects but hasn't yet written th
 
 ---
 
-## Further Reading
-
-- [Git Internals — Pro Git Book](https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain)
-- [Git from the inside out](https://codewords.recurse.com/issues/two/git-from-the-inside-out)
-- [The Git Parable](https://tom.preston-werner.com/2009/05/19/the-git-parable.html)
