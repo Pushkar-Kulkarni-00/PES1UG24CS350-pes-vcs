@@ -15,6 +15,8 @@
 // PROVIDED functions: index_find, index_remove, index_status
 // TODO functions:     index_load, index_save, index_add
 
+//Completed TODO
+
 #include "index.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -193,7 +195,7 @@ int index_save(const Index *index) {
     return 0;
 }
 
-//Verified staged / unstaged and untracked files
+
 
 int index_add(Index *index, const char *path) {
     // Read file contents
