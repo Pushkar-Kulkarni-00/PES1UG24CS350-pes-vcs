@@ -107,6 +107,18 @@ int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out
     ssize_t written = write(fd, full_object, total_len);
     free(full_object);
     if (written != (ssize_t)total_len) { close(fd); unlink(tmp_path); return -1; }
+    
+    // fsync, atomic rename, fsync directory
+    fsync(fd);
+    close(fd);
+
+    if (rename(tmp_path, final_path) != 0) {
+        unlink(tmp_path);
+        return -1;
+    }
+
+    int dir_fd = open(shard_dir, O_RDONLY);
+    if (dir_fd >= 0) { fsync(dir_fd); close(dir_fd); }
 
     if (id_out) *id_out = id;
     return 0;
