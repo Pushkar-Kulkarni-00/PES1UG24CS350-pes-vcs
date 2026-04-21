@@ -60,7 +60,7 @@ int object_exists(const ObjectID *id) {
     return access(path, F_OK) == 0;
 }
 
-//TODO 1 COMPLETED
+//TODO 1
 int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out) {
     const char *type_str = (type == OBJ_BLOB) ? "blob" :
                            (type == OBJ_TREE) ? "tree" : "commit";
@@ -81,12 +81,33 @@ int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out
     ObjectID id;
     compute_hash(full_object, total_len, &id);
 
-    // Debug print to verify (remove later)
+    // Deduplication check
+    if (object_exists(&id)) {
+        if (id_out) *id_out = id;
+        free(full_object);
+        return 0;
+    }
+    
+    // Create shard directory .pes/objects/XX/
     char hex[HASH_HEX_SIZE + 1];
     hash_to_hex(&id, hex);
-    printf("DEBUG hash: %s\n", hex);
+    char shard_dir[512];
+    snprintf(shard_dir, sizeof(shard_dir), "%s/%.2s", OBJECTS_DIR, hex);
+    mkdir(shard_dir, 0755);
 
+    // Write to temp file
+    char final_path[512];
+    object_path(&id, final_path, sizeof(final_path));
+    char tmp_path[520];
+    snprintf(tmp_path, sizeof(tmp_path), "%s.tmp", final_path);
+
+    int fd = open(tmp_path, O_CREAT | O_WRONLY | O_TRUNC, 0444);
+    if (fd < 0) { free(full_object); return -1; }
+
+    ssize_t written = write(fd, full_object, total_len);
     free(full_object);
+    if (written != (ssize_t)total_len) { close(fd); unlink(tmp_path); return -1; }
+
     if (id_out) *id_out = id;
     return 0;
 }
