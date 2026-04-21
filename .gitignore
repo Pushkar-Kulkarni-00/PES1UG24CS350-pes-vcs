@@ -18,3 +18,5 @@ test_tree
 .idea/
 
 
+*.txt
+src/
