@@ -101,7 +101,7 @@ int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out
     char tmp_path[520];
     snprintf(tmp_path, sizeof(tmp_path), "%s.tmp", final_path);
 
-    int fd = open(tmp_path, O_CREAT | O_WRONLY | O_TRUNC, 0444);
+    int fd = open(tmp_path, O_CREAT | O_WRONLY | O_TRUNC, 0644);
     if (fd < 0) { free(full_object); return -1; }
 
     ssize_t written = write(fd, full_object, total_len);
@@ -144,6 +144,14 @@ int object_read(const ObjectID *id, ObjectType *type_out, void **data_out, size_
         free(raw); fclose(f); return -1;
     }
     fclose(f);
+    
+    // Verify integrity: recompute hash and compare to expected
+    ObjectID computed;
+    compute_hash(raw, (size_t)file_size, &computed);
+    if (memcmp(computed.hash, id->hash, HASH_SIZE) != 0) {
+        free(raw);
+        return -1;
+    }
 
     // Find null byte separating header from data
     uint8_t *null_pos = memchr(raw, '\0', (size_t)file_size);
