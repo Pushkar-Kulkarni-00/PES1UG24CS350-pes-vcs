@@ -124,30 +124,47 @@ int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out
     return 0;
 }
 
-// Read an object from the store.
-//
-// Steps:
-//   1. Build the file path from the hash using object_path()
-//   2. Open and read the entire file
-//   3. Parse the header to extract the type string and size
-//   4. Verify integrity: recompute the SHA-256 of the file contents
-//      and compare to the expected hash (from *id). Return -1 if mismatch.
-//   5. Set *type_out to the parsed ObjectType
-//   6. Allocate a buffer, copy the data portion (after the \0), set *data_out and *len_out
-//
-// HINTS - Useful syscalls and functions for this phase:
-//   - object_path        : getting the target file path
-//   - fopen, fread, fseek: reading the file into memory
-//   - memchr             : safely finding the '\0' separating header and data
-//   - strncmp            : parsing the type string ("blob", "tree", "commit")
-//   - compute_hash       : re-hashing the read data for integrity verification
-//   - memcmp             : comparing the computed hash against the requested hash
-//   - malloc, memcpy     : allocating and returning the extracted data
-//
-// The caller is responsible for calling free(*data_out).
-// Returns 0 on success, -1 on error (file not found, corrupt, etc.).
+//TODO
 int object_read(const ObjectID *id, ObjectType *type_out, void **data_out, size_t *len_out) {
-    // TODO: Implement
-    (void)id; (void)type_out; (void)data_out; (void)len_out;
-    return -1;
+    char path[512];
+    object_path(id, path, sizeof(path));
+
+    FILE *f = fopen(path, "rb");
+    if (!f) return -1;
+
+    fseek(f, 0, SEEK_END);
+    long file_size = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    if (file_size < 0) { fclose(f); return -1; }
+
+    uint8_t *raw = malloc((size_t)file_size);
+    if (!raw) { fclose(f); return -1; }
+
+    if (fread(raw, 1, (size_t)file_size, f) != (size_t)file_size) {
+        free(raw); fclose(f); return -1;
+    }
+    fclose(f);
+
+    // Find null byte separating header from data
+    uint8_t *null_pos = memchr(raw, '\0', (size_t)file_size);
+    if (!null_pos) { free(raw); return -1; }
+
+    // Parse type
+    if      (strncmp((char *)raw, "blob ",   5) == 0) *type_out = OBJ_BLOB;
+    else if (strncmp((char *)raw, "tree ",   5) == 0) *type_out = OBJ_TREE;
+    else if (strncmp((char *)raw, "commit ", 7) == 0) *type_out = OBJ_COMMIT;
+    else { free(raw); return -1; }
+
+    size_t data_offset = (size_t)(null_pos - raw) + 1;
+    size_t data_len    = (size_t)file_size - data_offset;
+
+    uint8_t *buf = malloc(data_len + 1);
+    if (!buf) { free(raw); return -1; }
+    memcpy(buf, raw + data_offset, data_len);
+    buf[data_len] = '\0';
+
+    free(raw);
+    *data_out = buf;
+    *len_out  = data_len;
+    return 0;
 }
