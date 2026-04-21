@@ -70,11 +70,11 @@ Every piece of data is stored as an object named by its SHA-256 hash, sharded in
 
 ### Screenshot 1A — All Phase 1 tests passing
 
-![Screenshot 1A](ss/screenshot1a.png)
+![Screenshot 1A](screenshot1a.png)
 
 ### Screenshot 1B — Sharded object store structure
 
-![Screenshot 1B](ss/screenshot1b.png)
+![Screenshot 1B](screenshot1b.png)
 
 ---
 
@@ -96,11 +96,11 @@ Tree objects represent directory snapshots. Each entry stores a mode, name, and 
 
 ### Screenshot 2A — All Phase 2 tests passing
 
-![Screenshot 2A](ss/screenshot2a.png)
+![Screenshot 2A](screenshot2a.png)
 
 ### Screenshot 2B — Raw binary tree object (xxd)
 
-![Screenshot 2B](ss/screenshot2b.png)
+![Screenshot 2B](screenshot2b.png)
 
 ---
 
@@ -122,11 +122,11 @@ The index is a human-readable text file tracking staged files:
 
 ### Screenshot 3A — `pes init` → `pes add` → `pes status`
 
-![Screenshot 3A](ss/screenshot3a.png)
+![Screenshot 3A](screenshot3a.png)
 
 ### Screenshot 3B — `cat .pes/index` showing text format
 
-![Screenshot 3B](ss/screenshot3b.png)
+![Screenshot 3B](screenshot3b.png)
 
 ---
 
@@ -150,15 +150,15 @@ committer <name> <unix-timestamp>
 
 ### Screenshot 4A — `pes log` showing three commits
 
-![Screenshot 4A](ss/screenshot4a.png)
+![Screenshot 4A](screenshot4a.png)
 
 ### Screenshot 4B — Object store growth after three commits
 
-![Screenshot 4B](ss/screenshot4b.png)
+![Screenshot 4B](screenshot4b.png)
 
 ### Screenshot 4C — Reference chain (`HEAD` → `refs/heads/main`)
 
-![Screenshot 4C](ss/screenshot4c.png)
+![Screenshot 4C](screenshot4c.png)
 
 ---
 
@@ -168,9 +168,9 @@ Full end-to-end test via `make test-integration` (`test_sequence.sh`):
 
 ### Integration Test
 
-![Final 1](ss/screenshotfinal1.png)
-![Final 2](ss/screenshotfinal2.png)
-![Final 3](ss/screenshotfinal3.png)
+![Final 1](screenshotfinal1.png)
+![Final 2](screenshotfinal2.png)
+![Final 3](screenshotfinal3.png)
 
 ---
 
